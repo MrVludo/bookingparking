@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Parking Booking</title>
+  <style>
+    /* ---------- Shared variables ---------- */
+    :root{
+      --blue: #0078D4;
+      --blue-dark: #005fa3;
+      --bg: #f4f4f4;
+      --white: #ffffff;
+      --muted: #eaeaea;
+      --muted-dark: #d6d6d6;
+      --danger: #ffd2d2;
+      --success: #c9f5c9;
+      --card-shadow: 0 0 10px rgba(0,0,0,0.08);
+      --radius: 8px;
+      --max-desktop-width: 700px;
+    }
+
+    /* ---------- Desktop / default (matches previous look) ---------- */
+    html,body{
+      height:100%;
+      margin:0;
+      background:var(--bg);
+      font-family: Arial, sans-serif;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      box-sizing:border-box;
+    }
+    *,*::before,*::after{box-sizing:inherit;}
+
+    .page {
+      min-height:100vh;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding:40px 20px;
+    }
+
+    .container {
+      width:100%;
+      max-width:var(--max-desktop-width);
+      background:var(--white);
+      padding:20px;
+      border-radius:12px;
+      box-shadow:var(--card-shadow);
+      overflow:visible; /* important so calendar not clipped on small screens */
+    }
+
+    h1{
+      margin:0 0 16px 0;
+      color:#333;
+      font-size:20px;
+    }
+
+    label{
+      display:block;
+      margin-top:6px;
+      margin-bottom:6px;
+      color:#333;
+      font-weight:600;
+    }
+
+    select {
+      width:100%;
+      padding:10px;
+      border-radius:6px;
+      border:1px solid #ccc;
+      font-size:14px;
+      margin-bottom:12px;
+    }
+
+    .confirmation {
+      min-height:20px;
+      margin-bottom:10px;
+      font-weight:500;
+    }
+
+    .calendar { margin-top:18px; }
+
+    .calendar-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    /* Blue arrow buttons similar to earlier working look */
+    .cal-btn {
+      background-color:var(--blue);
+      border:none;
+      color:var(--white);
+      font-size:16px;
+      cursor:pointer;
+      padding:6px 10px;
+      border-radius:6px;
+      transition:background-color .12s ease;
+      min-width:36px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .cal-btn:hover{ background-color:var(--blue-dark); }
+
+    .calendar-title {
+      font-weight:bold;
+      font-size:18px;
+      text-align:center;
+      flex:1;
+    }
+
+    /* calendar grid: 7 columns, equal widths */
+    .calendar-grid {
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap:6px;
+      width:100%;
+    }
+
+    .weekday, .day {
+      padding:10px;
+      border-radius:6px;
+      text-align:center;
+      font-size:14px;
+      overflow-wrap:break-word;
+    }
+
+    .weekday {
+      font-weight:700;
+      background:#ddd;
+    }
+
+    .day {
+      background:var(--muted);
+      cursor:pointer;
+      transition:background-color .16s ease;
+      min-height:56px; /* keeps consistent rows */
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+    }
+    .day:hover { background:var(--muted-dark); }
+
+    .day strong { display:block; font-size:16px; margin-bottom:6px; }
+
+    /* Booked states */
+    .booked.other { background:var(--danger); cursor:not-allowed; }
+    .booked.self { background:var(--success); cursor:pointer; }
+
+    /* ---------- Mobile adjustments (only for small viewports) ---------- */
+    @media (max-width: 600px) {
+      .page { padding:12px; }
+      .container {
+        padding:14px;
+        border-radius:10px;
+      }
+      h1 { font-size:18px; margin-bottom:12px; text-align:center; }
+      .calendar-header {
+        gap:8px;
+      }
+
+      /* make arrows round and slightly larger for touch */
+      .cal-btn {
+        width:44px;
+        height:44px;
+        border-radius:22px;
+        padding:0;
+        font-size:18px;
+      }
+
+      .calendar-grid { gap:4px; }
+      .weekday, .day { padding:8px; font-size:13px; min-height:54px; }
+      .weekday { font-size:11px; }
+
+      /* reduce title minimum width so header fits */
+      .calendar-title { font-size:15px; min-width:0; padding:0 8px; }
+
+      /* Slightly smaller name/Available text for readability, but still clear */
+      .day span { font-size: 12px; margin-top: 4px; display: block; }
+      .day strong { font-size:15px; margin-bottom:4px; }
+    }
+
+    /* Small screens still must show all 7 columns; use minmax(0,1fr) to avoid overflow issues */
+    @media (max-width:420px) {
+      .calendar-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="container">
+      <h1>Parking Booking</h1>
+
+      <label for="person">You are:</label>
+      <select id="person">
+        <option value="Guest">Guest</option>
+        <option value="Chris">Chris</option>
+        <option value="Tuula">Tuula</option>
+        <option value="Katja">Katja</option>
+        <option value="Kati">Kati</option>
+        <option value="Saima">Saima</option>
+        <option value="Patrick">Patrick</option>
+        <option value="Vladimir">Vladimir</option>
+      </select>
+
+      <div class="confirmation" id="confirmation"></div>
+      <div class="calendar" id="calendar"></div>
+    </div>
+  </div>
+
+  <!-- Socket.IO client -->
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    // ---------- real-time + calendar logic (unchanged behavior) ----------
+    const socket = io();
+    let bookings = {};
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
+
+    async function loadBookings() {
+      try {
+        const res = await fetch("/bookings");
+        if (res.ok) bookings = await res.json();
+      } catch (e) {
+        console.error("Failed to load bookings:", e);
+      }
+    }
+
+    function sendUpdate() {
+      socket.emit("update_bookings", bookings);
+    }
+
+    async function bookOrUnbook(dateStr) {
+      const person = document.getElementById('person').value;
+      const confirmation = document.getElementById('confirmation');
+
+      if (bookings[dateStr]) {
+        if (bookings[dateStr] === person) {
+          delete bookings[dateStr];
+          confirmation.textContent = `You unbooked ${dateStr}.`;
+          confirmation.style.color = "gray";
+        } else {
+          confirmation.textContent = `This date is already booked by ${bookings[dateStr]}. You cannot change it.`;
+          confirmation.style.color = "red";
+          return;
+        }
+      } else {
+        bookings[dateStr] = person;
+        confirmation.textContent = `Successfully booked ${person} for ${dateStr}.`;
+        confirmation.style.color = "green";
+      }
+
+      sendUpdate();
+      renderCalendar(currentMonth, currentYear);
+    }
+
+    function changeMonth(offset) {
+      currentMonth += offset;
+      if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+      else if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+      renderCalendar(currentMonth, currentYear);
+    }
+
+    function renderCalendar(month, year) {
+      const calendar = document.getElementById('calendar');
+      calendar.innerHTML = "";
+
+      const header = document.createElement('div');
+      header.className = "calendar-header";
+
+      const prevButton = document.createElement('button');
+      prevButton.className = "cal-btn";
+      prevButton.textContent = "⬅";
+      prevButton.onclick = () => changeMonth(-1);
+
+      const nextButton = document.createElement('button');
+      nextButton.className = "cal-btn";
+      nextButton.textContent = "➡";
+      nextButton.onclick = () => changeMonth(1);
+
+      const title = document.createElement('div');
+      title.className = "calendar-title";
+      title.textContent = `${new Date(year, month).toLocaleString('default', { month: 'long' })} ${year}`;
+
+      header.appendChild(prevButton);
+      header.appendChild(title);
+      header.appendChild(nextButton);
+      calendar.appendChild(header);
+
+      const grid = document.createElement('div');
+      grid.className = "calendar-grid";
+
+      // Weekday headers (Mon-Sun)
+      const weekdays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      for (const w of weekdays) {
+        const wd = document.createElement('div');
+        wd.className = "weekday";
+        wd.textContent = w;
+        grid.appendChild(wd);
+      }
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      let startDay = firstDay.getDay();
+      if (startDay === 0) startDay = 7; // make Monday = 1
+
+      // empty slots before the first day
+      for (let i = 1; i < startDay; i++) {
+        const empty = document.createElement('div');
+        empty.className = "day";
+        grid.appendChild(empty);
+      }
+
+      const person = document.getElementById('person').value;
+
+      for (let d = 1; d <= lastDay.getDate(); d++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const dayDiv = document.createElement('div');
+        dayDiv.className = "day";
+
+        if (bookings[dateStr]) {
+          dayDiv.classList.add('booked');
+          if (bookings[dateStr] === person) dayDiv.classList.add('self');
+          else dayDiv.classList.add('other');
+          dayDiv.innerHTML = `<strong>${d}</strong><span style="font-size:12px;margin-top:4px;display:block;">${bookings[dateStr]}</span>`;
+        } else {
+          dayDiv.innerHTML = `<strong>${d}</strong><span style="font-size:12px;margin-top:4px;display:block;">Available</span>`;
+        }
+
+        // Always attach click handler; the handler itself enforces ownership.
+        dayDiv.addEventListener('click', () => bookOrUnbook(dateStr), {passive:true});
+        grid.appendChild(dayDiv);
+      }
+
+      calendar.appendChild(grid);
+    }
+
+    // Re-render immediately on person change so available actions update
+    document.getElementById('person').addEventListener('change', () => {
+      renderCalendar(currentMonth, currentYear);
+      document.getElementById('confirmation').textContent = '';
+    });
+
+    // Receive updates from server (other clients)
+    socket.on('bookings_updated', (data) => {
+      bookings = data || {};
+      renderCalendar(currentMonth, currentYear);
+    });
+
+    // initial load
+    (async () => {
+      await loadBookings();
+      renderCalendar(currentMonth, currentYear);
+    })();
+  </script>
+</body>
+</html>
