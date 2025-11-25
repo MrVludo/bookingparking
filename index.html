@@ -147,6 +147,12 @@
 
     .day strong { display:block; font-size:16px; margin-bottom:6px; }
 
+    .day.today {
+      border: 2px solid #000;/*#0078D4;*/
+      box-sizing: border-box;
+    }
+
+
     /* Booked states */
     .booked.other { background:var(--danger); cursor:not-allowed; }
     .booked.self { background:var(--success); cursor:pointer; }
@@ -198,6 +204,7 @@
 
       <label for="person">You are:</label>
       <select id="person">
+        <option value="none">Who you are</option>
         <option value="Guest">Guest</option>
         <option value="Chris">Chris</option>
         <option value="Tuula">Tuula</option>
@@ -238,6 +245,13 @@
     async function bookOrUnbook(dateStr) {
       const person = document.getElementById('person').value;
       const confirmation = document.getElementById('confirmation');
+
+      if (person === "none") {
+        confirmation.textContent = "Please select who you are before booking.";
+        confirmation.style.color = "red";
+        renderCalendar(currentMonth, currentYear);
+        return;
+      }
 
       if (bookings[dateStr]) {
         if (bookings[dateStr] === person) {
@@ -295,7 +309,6 @@
       const grid = document.createElement('div');
       grid.className = "calendar-grid";
 
-      // Weekday headers (Mon-Sun)
       const weekdays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
       for (const w of weekdays) {
         const wd = document.createElement('div');
@@ -307,9 +320,8 @@
       const firstDay = new Date(year, month, 1);
       const lastDay = new Date(year, month + 1, 0);
       let startDay = firstDay.getDay();
-      if (startDay === 0) startDay = 7; // make Monday = 1
+      if (startDay === 0) startDay = 7; // Monday = 1
 
-      // empty slots before the first day
       for (let i = 1; i < startDay; i++) {
         const empty = document.createElement('div');
         empty.className = "day";
@@ -318,27 +330,46 @@
 
       const person = document.getElementById('person').value;
 
+      // Today detection
+      const today = new Date();
+      const isCurrentMonth =
+        today.getFullYear() === year &&
+        today.getMonth() === month;
+
       for (let d = 1; d <= lastDay.getDate(); d++) {
         const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
         const dayDiv = document.createElement('div');
         dayDiv.className = "day";
 
+        // Apply thin border to today's date
+        if (isCurrentMonth && d === today.getDate()) {
+          dayDiv.style.border = "2px solid #000"; //#0078D4"; 
+        }
+
         if (bookings[dateStr]) {
           dayDiv.classList.add('booked');
           if (bookings[dateStr] === person) dayDiv.classList.add('self');
           else dayDiv.classList.add('other');
-          dayDiv.innerHTML = `<strong>${d}</strong><span style="font-size:12px;margin-top:4px;display:block;">${bookings[dateStr]}</span>`;
+          dayDiv.innerHTML =
+            `<strong>${d}</strong>
+            <span style="font-size:12px;margin-top:4px;display:block;">
+              ${bookings[dateStr]}
+            </span>`;
         } else {
-          dayDiv.innerHTML = `<strong>${d}</strong><span style="font-size:12px;margin-top:4px;display:block;">Available</span>`;
+          dayDiv.innerHTML =
+            `<strong>${d}</strong>
+            <span style="font-size:12px;margin-top:4px;display:block;">
+              Available
+            </span>`;
         }
 
-        // Always attach click handler; the handler itself enforces ownership.
-        dayDiv.addEventListener('click', () => bookOrUnbook(dateStr), {passive:true});
+        dayDiv.addEventListener('click', () => bookOrUnbook(dateStr), { passive: true });
         grid.appendChild(dayDiv);
       }
 
       calendar.appendChild(grid);
     }
+
 
     // Re-render immediately on person change so available actions update
     document.getElementById('person').addEventListener('change', () => {
