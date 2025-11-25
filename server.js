@@ -8,29 +8,23 @@ const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: "*" },
-});
+const io = new Server(server, { cors: { origin: "*" } });
 
 const CSV_FILE = "booking_data.csv";
 
 // --- Middleware ---
 app.use(express.json());
-app.use(express.static(__dirname)); // serve index.html and static files
+app.use(express.static(path.join(__dirname, "public"))); // static files
 
 // --- Load bookings ---
 function loadBookings() {
   return new Promise((resolve, reject) => {
     const bookings = {};
-    if (!fs.existsSync(CSV_FILE)) {
-      return resolve(bookings);
-    }
+    if (!fs.existsSync(CSV_FILE)) return resolve(bookings);
 
     fs.createReadStream(CSV_FILE)
       .pipe(csvParser({ headers: ["date", "person"] }))
-      .on("data", (row) => {
-        bookings[row.date] = row.person;
-      })
+      .on("data", (row) => { bookings[row.date] = row.person; })
       .on("end", () => resolve(bookings))
       .on("error", (err) => reject(err));
   });
@@ -56,9 +50,9 @@ app.get("/bookings", async (req, res) => {
   res.json(bookings);
 });
 
-// Serve index.html by default
+// Serve index.html
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // --- Socket.IO ---
@@ -70,13 +64,11 @@ io.on("connection", (socket) => {
     io.emit("bookings_updated", data); // broadcast to all clients
   });
 
-  socket.on("disconnect", () => {
-    console.log("user disconnected");
-  });
+  socket.on("disconnect", () => console.log("user disconnected"));
 });
 
 // --- Start server ---
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
