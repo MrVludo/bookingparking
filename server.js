@@ -1,74 +1,60 @@
+require("dotenv").config();
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
-const fs = require("fs");
 const path = require("path");
-const csvParser = require("csv-parser");
-const createCsvWriter = require("csv-writer").createObjectCsvWriter;
+const { createClient } = require("redis");
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-const CSV_FILE = "booking_data.csv";
+// ---------- CONNECT TO REDIS ----------
+const redis = createClient({ url: process.env.REDIS_URL });
+redis.connect().then(() => console.log("Redis Connected ✓"))
+.catch(err => console.error("Redis connection failed ❗", err));
 
-// --- Middleware ---
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "public"))); // static files
-
-// --- Load bookings ---
-function loadBookings() {
-  return new Promise((resolve, reject) => {
-    const bookings = {};
-    if (!fs.existsSync(CSV_FILE)) return resolve(bookings);
-
-    fs.createReadStream(CSV_FILE)
-      .pipe(csvParser({ headers: ["date", "person"] }))
-      .on("data", (row) => { bookings[row.date] = row.person; })
-      .on("end", () => resolve(bookings))
-      .on("error", (err) => reject(err));
-  });
+// ---------- GET BOOKINGS FROM REDIS ----------
+async function loadBookings() {
+  let data = await redis.get("bookings");
+  return data ? JSON.parse(data) : {};
 }
 
-// --- Save bookings ---
+// ---------- SAVE BOOKINGS ----------
 async function saveBookings(bookings) {
-  const csvWriter = createCsvWriter({
-    path: CSV_FILE,
-    header: [
-      { id: "date", title: "date" },
-      { id: "person", title: "person" },
-    ],
-  });
-
-  const records = Object.entries(bookings).map(([date, person]) => ({ date, person }));
-  await csvWriter.writeRecords(records);
+  await redis.set("bookings", JSON.stringify(bookings));
 }
 
-// --- Routes ---
+// ---------- MIDDLEWARE ----------
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public"))); // index.html must be inside /public
+
+// ---------- ROUTES ----------
 app.get("/bookings", async (req, res) => {
   const bookings = await loadBookings();
   res.json(bookings);
 });
 
-// Serve index.html
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// --- Socket.IO ---
-io.on("connection", (socket) => {
-  console.log("a user connected");
+// ---------- SOCKET.IO ----------
+io.on("connection", async (socket) => {
+  console.log("User connected");
+
+  socket.emit("bookings_updated", await loadBookings());
 
   socket.on("update_bookings", async (data) => {
     await saveBookings(data);
-    io.emit("bookings_updated", data); // broadcast to all clients
+    io.emit("bookings_updated", data);
   });
 
-  socket.on("disconnect", () => console.log("user disconnected"));
+  socket.on("disconnect", () => console.log("User disconnected"));
 });
 
-// --- Start server ---
+// ---------- RUN SERVER ----------
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server live on ${PORT}`);
 });

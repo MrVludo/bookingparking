@@ -1,2 +1,4 @@
 booking_data.csv
+.env
+*.env
 /node_modules
