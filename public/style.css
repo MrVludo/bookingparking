@@ -17,7 +17,7 @@
 html,body{
     height:100%;
     margin:0;
-    background:var(--bg);
+    background:var(--bg, #f4f4f4);
     font-family: Arial, sans-serif;
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
@@ -209,12 +209,14 @@ select {
 
 /* ---------- Seasonal background themes ---------- */
 /* December: dark Christmas red */
-body.theme-december {
-    background: #4b0006; /* deep red */
+    html.theme-december,
+body.theme-december,
+html.theme-december body {
+    background: #4b0006 !important;
 }
 
 /* January + February: dark winter blue */
-body.theme-janfeb {
+html.theme-janfeb,body.theme-janfeb {
     background: #031A2B; /* dark blue */
 }
 

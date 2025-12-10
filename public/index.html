@@ -215,13 +215,21 @@
 
         // Apply theme class: explicit ?theme=dec or ?theme=janfeb overrides month check
         if (themeParam === 'dec' || themeParam === 'december') {
+          document.documentElement.classList.add("theme-december");
           document.body.classList.add('theme-december');
         } else if (themeParam === 'jan' || themeParam === 'feb' || themeParam === 'janfeb' || themeParam === 'winter') {
+          document.documentElement.classList.add("theme-janfeb");
           document.body.classList.add('theme-janfeb');
         } else {
           // apply based on current month
-          if (month === 11) document.body.classList.add('theme-december');
-          else if (month === 0 || month === 1) document.body.classList.add('theme-janfeb');
+          if (month === 11) {
+            document.documentElement.classList.add("theme-december");
+            document.body.classList.add('theme-december');
+          }
+          else if (month === 0 || month === 1) {
+            document.documentElement.classList.add("theme-janfeb");
+            document.body.classList.add('theme-janfeb');
+          }
         }
 
         if (!showSnow) return;
