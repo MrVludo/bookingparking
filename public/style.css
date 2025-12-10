@@ -1,0 +1,222 @@
+/* ---------- Shared variables ---------- */
+:root{
+    --blue: #0078D4;
+    --blue-dark: #005fa3;
+    --bg: #f4f4f4;
+    --white: #ffffff;
+    --muted: #eaeaea;
+    --muted-dark: #d6d6d6;
+    --danger: #ffd2d2;
+    --success: #c9f5c9;
+    --card-shadow: 0 0 10px rgba(0,0,0,0.08);
+    --radius: 8px;
+    --max-desktop-width: 700px;
+}
+
+/* ---------- Desktop / default (matches previous look) ---------- */
+html,body{
+    height:100%;
+    margin:0;
+    background:var(--bg);
+    font-family: Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    box-sizing:border-box;
+}
+*,*::before,*::after{box-sizing:inherit;}
+
+.page {
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:40px 20px;
+}
+
+.container {
+    width:100%;
+    max-width:var(--max-desktop-width);
+    background:var(--white);
+    padding:20px;
+    border-radius:12px;
+    box-shadow:var(--card-shadow);
+    overflow:visible; /* important so calendar not clipped on small screens */
+}
+
+h1{
+    margin:0 0 16px 0;
+    color:#333;
+    font-size:20px;
+}
+
+label{
+    display:block;
+    margin-top:6px;
+    margin-bottom:6px;
+    color:#333;
+    font-weight:600;
+}
+
+select {
+    width:100%;
+    padding:10px;
+    border-radius:6px;
+    border:1px solid #ccc;
+    font-size:14px;
+    margin-bottom:12px;
+}
+
+.confirmation {
+    min-height:20px;
+    margin-bottom:10px;
+    font-weight:500;
+}
+
+.calendar { margin-top:18px; }
+
+.calendar-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+}
+
+/* Blue arrow buttons similar to earlier working look */
+.cal-btn {
+    background-color:var(--blue);
+    border:none;
+    color:var(--white);
+    font-size:16px;
+    cursor:pointer;
+    padding:6px 10px;
+    border-radius:6px;
+    transition:background-color .12s ease;
+    min-width:36px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+}
+.cal-btn:hover{ background-color:var(--blue-dark); }
+
+.calendar-title {
+    font-weight:bold;
+    font-size:18px;
+    text-align:center;
+    flex:1;
+}
+
+/* calendar grid: 7 columns, equal widths */
+.calendar-grid {
+    display:grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap:6px;
+    width:100%;
+}
+
+.weekday, .day {
+    padding:10px;
+    border-radius:6px;
+    text-align:center;
+    font-size:14px;
+    overflow-wrap:break-word;
+}
+
+.weekday {
+    font-weight:700;
+    background:#ddd;
+}
+
+.day {
+    background:var(--muted);
+    cursor:pointer;
+    transition:background-color .16s ease;
+    min-height:56px; /* keeps consistent rows */
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+.day:hover { background:var(--muted-dark); }
+
+.day strong { display:block; font-size:16px; margin-bottom:6px; }
+
+.day.today {
+    border: 2px solid #000;/*#0078D4;*/
+    box-sizing: border-box;
+}
+
+
+/* Booked states */
+.booked.other { background:var(--danger); cursor:not-allowed; }
+.booked.self { background:var(--success); cursor:pointer; }
+
+/* ---------- Mobile adjustments (only for small viewports) ---------- */
+@media (max-width: 600px) {
+    .page { padding:12px; }
+    .container {
+    padding:14px;
+    border-radius:10px;
+    }
+    h1 { font-size:18px; margin-bottom:12px; text-align:center; }
+    .calendar-header {
+    gap:8px;
+    }
+
+    /* make arrows round and slightly larger for touch */
+    .cal-btn {
+    width:44px;
+    height:44px;
+    border-radius:22px;
+    padding:0;
+    font-size:18px;
+    }
+
+    .calendar-grid { gap:4px; }
+    .weekday, .day { padding:8px; font-size:13px; min-height:54px; }
+    .weekday { font-size:11px; }
+
+    /* reduce title minimum width so header fits */
+    .calendar-title { font-size:15px; min-width:0; padding:0 8px; }
+
+    /* Slightly smaller name/Available text for readability, but still clear */
+    .day span { font-size: 12px; margin-top: 4px; display: block; }
+    .day strong { font-size:15px; margin-bottom:4px; }
+}
+
+/* Small screens still must show all 7 columns; use minmax(0,1fr) to avoid overflow issues */
+@media (max-width:420px) {
+    .calendar-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+}
+
+/* ---------- Snowflake effect (shows when injected) ---------- */
+/* customizable snowflake styling */
+.snowflakes{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none}
+.snowflake {
+    color: #fff;
+    font-size: 1em;
+    font-family: Arial, sans-serif;
+    text-shadow: 0 0 5px #000;
+}
+
+.snowflake,.snowflake .inner{animation-iteration-count:infinite;animation-play-state:running}
+@keyframes snowflakes-fall{0%{transform:translateY(0)}100%{transform:translateY(110vh)}}
+@keyframes snowflakes-shake{0%,100%{transform:translateX(0)}50%{transform:translateX(80px)}}
+.snowflake{position:fixed;top:-10%;z-index:9999;-webkit-user-select:none;user-select:none;cursor:default;pointer-events:none;animation-name:snowflakes-shake;animation-duration:3s;animation-timing-function:ease-in-out}
+.snowflake .inner{animation-duration:10s;animation-name:snowflakes-fall;animation-timing-function:linear}
+.snowflake:nth-of-type(0){left:1%;animation-delay:0s}.snowflake:nth-of-type(0) .inner{animation-delay:0s}.snowflake:first-of-type{left:10%;animation-delay:1s}.snowflake:first-of-type .inner,.snowflake:nth-of-type(8) .inner{animation-delay:1s}.snowflake:nth-of-type(2){left:20%;animation-delay:.5s}.snowflake:nth-of-type(2) .inner,.snowflake:nth-of-type(6) .inner{animation-delay:6s}.snowflake:nth-of-type(3){left:30%;animation-delay:2s}.snowflake:nth-of-type(11) .inner,.snowflake:nth-of-type(3) .inner{animation-delay:4s}.snowflake:nth-of-type(4){left:40%;animation-delay:2s}.snowflake:nth-of-type(10) .inner,.snowflake:nth-of-type(4) .inner{animation-delay:2s}.snowflake:nth-of-type(5){left:50%;animation-delay:3s}.snowflake:nth-of-type(5) .inner{animation-delay:8s}.snowflake:nth-of-type(6){left:60%;animation-delay:2s}.snowflake:nth-of-type(7){left:70%;animation-delay:1s}.snowflake:nth-of-type(7) .inner{animation-delay:2.5s}.snowflake:nth-of-type(8){left:80%;animation-delay:0s}.snowflake:nth-of-type(9){left:90%;animation-delay:1.5s}.snowflake:nth-of-type(9) .inner{animation-delay:3s}.snowflake:nth-of-type(10){left:25%;animation-delay:0s}.snowflake:nth-of-type(11){left:65%;animation-delay:2.5s}
+
+/* allow forcing snow with ?snow=1 (script handles injection) */
+
+/* ---------- Seasonal background themes ---------- */
+/* December: dark Christmas red */
+body.theme-december {
+    background: #4b0006; /* deep red */
+}
+
+/* January + February: dark winter blue */
+body.theme-janfeb {
+    background: #031A2B; /* dark blue */
+}
+
+/* Optional subtle transition when theme changes */
+body { transition: background-color 250ms ease; }
